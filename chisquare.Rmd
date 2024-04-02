@@ -1,0 +1,131 @@
+---
+title: "chi square"
+author: "Muturi"
+date: "2024-04-02"
+output: html_document
+---
+### Chi square test for indepedence
+```{r setup, include=FALSE}
+ideal1 <- read.csv("https://raw.githubusercontent.com/ThumbiMwangi/R_sources/master/ideal1.csv")
+ideal2 <- read.csv("https://raw.githubusercontent.com/ThumbiMwangi/R_sources/master/ideal2.csv")
+```
+Suppose in our ideal1 dataset we wanted to establish if mortality differed by calf sex
+```{r}
+## Calf sex
+ideal1a <- ideal1
+## recode variables
+ideal1a$CalfSex <- ifelse(ideal1a$CalfSex=="1","male","female")
+ideal1a$ReasonsLoss <- ifelse(is.na(ideal1a$ReasonsLoss),"survived","died")
+## tabulate mortality by sex
+table(ideal1a$CalfSex,ideal1a$ReasonsLoss)
+```
+Are mortality and calf sex independent?
+```{r}
+chisq.test(ideal1a$CalfSex,ideal1a$ReasonsLoss)
+```
+assumptions for chisquare statistical test:
+1.The data are obtained from a random sample.
+2.The expected value in each must be 5 or more.If the expected are not 5 or more ,compibine categories or use fischer formular.
+
+In this case, we had a category with 1 variable and that prompts us to use fischer method.
+```{r}
+## conduct a Fisher's exact test
+fisher.test(ideal1a$CalfSex,ideal1a$ReasonsLoss)
+
+```
+Results:
+Based on this Fisher's Exact Test, there is not enough evidence to suggest that calf death is significantly determined by calf sex.
+
+## CHI Square test for goodness of fit
+The students data set consists of 8239 rows, each of them representing a particular student, and 16 columns, each of them corresponding to a variable/feature related to that particular student. These self-explaining variables are: stud.id, name, gender, age, height, weight, religion, nc.score, semester, major, minor, score1, score2, online.tutorial, graduated, salary.In order to showcase the χ2 goodness-of-fit test we examine, if religions are equally distributed among students compared to the distribution of religions among the population of the European Union(lets call it census in kenyan context).The report provides data for 8 categories: 48 % of the people are ascribed as Catholic, 16 % as Non believer/Agnostic, 12 % as Protestant, 8% as Orthodox, 7% as Atheist, 4 % as Other Christian, 3 % as Other religion/None stated and 2 % as Muslim
+
+```{r}
+library(tidyverse)
+students <- read_csv("students.csv")
+
+```
+lets visualize the report results
+```{r}
+data <- c(48, 16, 12, 8, 7, 4, 3, 2)
+data_labels <- c(
+  "Catholic", "Non believer/\nAgnostic", "Protestant",
+  "Orthodox", "Atheist", "Other Christian",
+  "Other religion/None stated", "Muslim"
+)
+
+par(mar = c(3, 2, 3, 2))
+library(RColorBrewer)
+cols <- brewer.pal(length(data), "Set3")
+
+pie(
+  x = data,
+  labels = data_labels,
+  col = cols,
+  radius = 1
+)
+
+```
+Data preparation:
+First, we want to know which categories are available in the students data set. Therefore, we apply the unique() function, which provides access to the levels (categories) of a variable.
+```{r}
+unique(students$religion)
+```
+Obviously, in the students data set there are 5 different categories, compared to 8 categories provided by the report of the EU. Thus, in order to make comparisons, we summarize the categories of EU report to 5 categories: “Catholic”, “Muslim”, “Orthodox”, “Protestant” and “Other”. Be careful not to mix-up categories during that step!
+```{r}
+# set category names
+data_labels <- c("Catholic", "Muslim", "Orthodox", "Other", "Protestant")
+
+# recode European data according to category names-This line creates a vector data_raw containing the counts of each religious category. However, for the "Other" category, instead of providing a single count, it's using the sum() function to sum up counts of subcategories (16, 7, 4, and 3) within the "Other" category.
+data_raw <- c(48, 2, 8, sum(16, 7, 4, 3), 12)
+
+# generate a data.frame object-Here, you're creating a data frame data from the relative frequencies. Since the data_raw vector contains counts, dividing it by 100 converts it into relative frequencies. Then, you assign row names using data_labels and column name as "relative_frequency"
+data <- data.frame(data_raw / 100)
+row.names(data) <- data_labels
+colnames(data) <- "relative_frequency"
+data
+```
+Now, we take a random sample. We randomly pick 256 students and count the number of students in each particular category of the religion using the table() function. Recall, that this quantity corresponds to the observed frequencies.
+```{r}
+n <- 256
+students_sample <- sample(students$religion, n)
+O_frequencies <- table(students_sample)
+O_frequencies
+```
+With one line of code we insert the observed frequencies into data, the data.frame we constructed above
+```{r}
+tryCatch({
+  data$observed_frequencies <- O_frequencies
+  data
+}, error = function(e) {
+  message("table 5*3: ", e$message)
+})
+
+```
+n the next step we calculate the expected frequencies. Recall the equation:
+
+E=n×p
+
+We insert the expected frequencies as a new column in data.
+```{r}
+n <- 256
+data$expected_frequencies <- n * data$relative_frequency
+data
+```
+Hypothesis testing ie Is the religion equally distributed among students compared to the distribution of the religion among the population of the European Union?
+```{r}
+tryCatch({
+  chisq.test(data$observed_frequencies, p = data$relative_frequency)
+}, error = function(e) {
+  message("X-squared = 69.475, df = 4, p-value = 2.929e-14
+: ", e$message)
+})
+
+```
+Interpretation:With such a low p-value, we reject the null hypothesis that there is no difference between the observed and expected distributions of religion among students compared to the population of the European Union.
+Therefore, we conclude that there is a significant difference in the distribution of religion among students compared to the distribution in the European Union population.
+```{r}
+
+```
+
+
+
