@@ -1,0 +1,139 @@
+---
+title: "t test"
+author: "Muturi"
+date: "2024-04-01"
+output: html_document
+---
+
+```{r,echo=FALSE, message=FALSE}
+library(tidyverse)
+
+```
+### One sample t test
+The one-sample t-test is used to determine whether a sample comes from a population with a specific mean. This population mean is not always known, but is sometimes hypothesized.For example Assuming the recruitment data in ideal1.csv is a random sample from a normal distribution - we may wish to test whether the sample mean deviates significantly from the “theoretical mean birth weight of 22kg” among East African zebu cattle
+```{r}
+# importing the data sets
+ideal1 <- read.csv("https://raw.githubusercontent.com/ThumbiMwangi/R_sources/master/ideal1.csv")
+ideal2 <- read.csv("https://raw.githubusercontent.com/ThumbiMwangi/R_sources/master/ideal2.csv")
+# Testing for normalitity(first method-visualization)
+hist(ideal1$RecruitWeight, xlab="Recruitment Weight", col="green",main="")
+# Testing for normality (second method-Shapiro-Wilk normality test)
+shapiro.test(ideal1$RecruitWeight)
+## Testing for normality(q-q plot)
+# First, create a qq-plot
+qqnorm(ideal1$RecruitWeight)
+
+# Then, add a reference line
+qqline(ideal1$RecruitWeight, lty = 2)
+# interpreting Q-Q plot
+#Points Aligning on Diagonal Line: If the points on the Q-Q plot align approximately along the diagonal line, it suggests that the data distribution is close to the theoretical distribution (e.g., normal distribution). This indicates a good fit between the data and the theoretical distribution.
+#Test for normality is done since t test assumes a normal distribution
+
+#Before making inferences, you want to know if the data is normally distributed, if there are outlier values in the data, and if the values in your data are serially correlated (these scenarios will invalidate inferences made if you use parametric tests such as the Student’s test)
+
+#outliers test (box plot)
+boxplot(ideal1$RecruitWeight, col="green")
+#results(one outlier)
+
+#Understanding the box and whisker plot:
+
+#The darker horizontal line in the boxplot is the median recruitment weight
+
+#The bottom and top of the box is the 25th and 75th percentiles
+
+#The vertical dotted lines are the whiskers and show one of two things:
+
+#The maximum/minimum value of the data
+
+#1.5 times the interquartile range (roughly 2 standard deviations)
+
+#The boxplot tells you location and spread of data, and the skewness (asymmetry of the sizes of upper and lower parts of the box)
+#Also a box plot can be used to determine variance for example in cases homogeinity of variance is required.
+
+#An outlier is referred to as a value more than 1.5 times the interquartile range above the 3rd quartile or below the 1st quartile
+#watch:https://youtu.be/INSIyaZUXIY?si=J1POfVNF14AY3FPy
+
+# t test
+mean(ideal1$RecruitWeight) 
+
+t.test(ideal1$RecruitWeight, mu=22)
+# results:We reject the null hypothesis - the observed difference between recruitment weight and the recommended is unlikely to occur by chance (small p-value)
+
+
+
+
+
+
+```
+### One sample t test(Two-sample t-test for means (comparing two independent means))
+We may be interested in testing whether there is a difference in recruitment weights of male and female calves i.e test whether the two independent samples can be assumed to come from distributions with the same mean.
+
+```{r}
+#Use a boxplot to visualise the distribution of the data points
+boxplot(RecruitWeight~as.factor(CalfSex), data=ideal1)
+
+#Null hypothesis: there is no difference in birth weights between male and female calves
+#Conduct a t-test expressed as a model formula, that the expected value of recruitment weight is dependent on the calf sex
+
+t.test(RecruitWeight~as.factor(CalfSex), data=ideal1)
+#results:
+  #From the result - the mean value for calf sex 1 (males) is 19.60, and for calf sex 2 (females) is 18.55
+
+#The confidence interval contains 0, indicating the means are NOT significantly different (p-value  >0.05)
+
+#The default setting for the t-test is the Welch two sample t-test (assumes unequal variances in the two groups)
+
+#In order to determine if the variances are equal, you may need to conduct a F-test (referred to as the Fisher’s F test named after geneticist R.A Fisher)
+
+#Compares two variances by dividing the larger variance by the smaller
+
+
+#if they are the same - the variance ratio is 1, and will need to be significantly bigger than 1 to consider the variances different (against the critical values of Fisher’s F tables)
+
+var.test(RecruitWeight~as.factor(CalfSex), data=ideal1)
+#The p-value is above 0.05, meaning equal variances are assumed
+#Constancy of variance (homoscedasticity) is the most important assumption underlying regression and analysis of variance
+
+# assuming an equality of variances
+t.test(RecruitWeight~as.factor(CalfSex), var.equal=TRUE,data=ideal1)
+#Results assuming equal variances are identical to those assuming unequal variances
+
+
+```
+### Paired t-test for means (comparing two dependent means)
+Some two-sample data may be correlated/paired observations - either made on the same individual at different times, or taken from same geographical locations
+
+“All things are related, but some are more related than others”
+
+Compare the means of weights of calves at recruitment and at end of study
+```{r}
+# Data cleaning
+ideal2a <- ideal2 %>%
+  # group by the CalfID
+  group_by(CalfID) %>%
+  # form new columns of each calf's minimum and maximum weight
+  mutate(WeightMin = min(Weight, na.rm=T),
+         WeightMax = max(Weight, na.rm=T)) %>%
+  # select only the columns of interest
+  select(CalfID, WeightMin, WeightMax) %>%
+  # remove duplicate records
+  distinct()
+#outliers detection
+boxplot(ideal2a$WeightMin,ideal2a$WeightMax, col="green")
+#Checking if they are related/depedant(using a correlation test)
+cor_test_result <- cor.test(ideal2a$WeightMin, ideal2a$WeightMax)
+print(cor_test_result)
+ 
+
+# Compare the means of calves at recruitment and at end of study
+t.test(ideal2a$WeightMin,ideal2a$WeightMax, paired = TRUE)
+
+#Results
+#The p-value is very very small (the probability that the observed difference is due to chance) p  < 0.00001. The average weight is significantly greater at one year compared to at birth.
+
+
+
+```
+
+`
+

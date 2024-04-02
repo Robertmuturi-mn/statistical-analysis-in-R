@@ -1,0 +1,31 @@
+---
+title: "Anova"
+author: "Muturi"
+date: "2024-04-02"
+output: html_document
+---
+# one way analysis of Variance (ANOVA)
+
+Analysis of variance is used to compare two or more indepedent means
+Anova assumes:
+1.The population from which samples are drawn should be normally distributed.
+2.Independence of cases: the sample cases should be independent of each other.
+3.Homogeneity of variance: Homogeneity means that the variance among the groups should be approximately equal.
+```{r, include=FALSE}
+# importing the data sets
+ideal1 <- read.csv("https://raw.githubusercontent.com/ThumbiMwangi/R_sources/master/ideal1.csv")
+ideal2 <- read.csv("https://raw.githubusercontent.com/ThumbiMwangi/R_sources/master/ideal2.csv")
+```
+Null Hypothesis (H0):
+
+The null hypothesis states that there is no significant difference in the mean RecruitWeight across the different levels of Education. In other words, the average RecruitWeight is the same for all levels of Education.
+Alternative Hypothesis (Ha):
+
+The alternative hypothesis suggests that there is a significant difference in the mean RecruitWeight across at least two levels of Education. In other words, at least one level of Education has a different average RecruitWeight compared to the others.
+```{r}
+# testing homogeinity of variance
+
+anova(lm(ideal1$RecruitWeight~as.factor(ideal1$Education)))
+```
+interpretation:
+The p-value for Education is greater than the significance level (commonly 0.05), indicating that we fail to reject the null hypothesis. Therefore, there is no significant difference in RecruitWeight among different levels of Education.
