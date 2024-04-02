@@ -1,0 +1,20 @@
+---
+title: "proportion test"
+author: "Muturi"
+date: "2024-04-01"
+output: html_document
+---
+
+Suppose you want to test if proportions (probabilities of success/failure) in several groups are same?Lets take a hypothetical situation where only 19 athletes from Europe have been suspended for doping, and 112 athletes from America have been suspended for doping in the last one year.
+One might wonder, is this a blatant attempt by International Association of Athletics Federations (IAAF) to discredit American athletes?.To answer this question, we would need to know the number of European and American athletes that have been tested in the same period.We have just received that information and it turns out that a total of 2240 American athletes were tested, compared to 190 athletes from Europe.From quick back of the envelope calculations, it looks as though American athletes faired better - only 5% (112/2240) were suspended compared to 10% (19/190) of athletes from Europe).Is the apparent difference between failure rates among European and American athletes a chance observation or is it that there is a statistically significant difference between them?
+
+```{r}
+# assuming an equality of variances
+prop.test(c(19,112),c(190,2240))
+
+#Results
+#we reject the null hypothesis that the failure rate of doping tests among European and American athletes are similar
+
+#the probability that this could be due to chance (p-value) is very small (p = 0.005)
+
+```
